@@ -21,7 +21,7 @@ public class PlayerMovement : MonoBehaviour
 
     private Vector3 movement;
 
-    void GetInput()
+    private void GetInput()
     {
         var h = (Vector3.right + Vector3.back) * Input.GetAxisRaw("Horizontal");
         var v = (Vector3.right + Vector3.forward) * Input.GetAxisRaw("Vertical");
