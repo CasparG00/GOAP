@@ -12,6 +12,10 @@ public abstract class Action
         myEffects = new HashSet<KeyValuePair<string, object>> ();
     }
 
+    public abstract void Reset();
+
+    public abstract bool CheckProceduralPrecondition(GameObject _agent);
+
     public abstract bool PerformAction(GameObject _agent);
 
     public void AddPrecondition(string _key, object _value)
