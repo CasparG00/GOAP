@@ -1,54 +1,67 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.AI;
 
 public abstract class Action
 {
-    private readonly HashSet<KeyValuePair<string, object>> myPreconditions;
-    private readonly HashSet<KeyValuePair<string, object>> myEffects;
+    public string name = "Abstract Action";
+    public float cost = 1f;
+    public GameObject target;
+    public float duration = 0f;
 
-    public Action() 
+    public Dictionary<string, object> preconditions { get; }
+    public Dictionary<string, object> effects { get; }
+
+    public bool IsAchievable()
     {
-        myPreconditions = new HashSet<KeyValuePair<string, object>> ();
-        myEffects = new HashSet<KeyValuePair<string, object>> ();
+        return true;
     }
-
-    public abstract void Reset();
-
-    public abstract bool CheckProceduralPrecondition(GameObject _agent);
-
-    public abstract bool PerformAction(GameObject _agent);
 
     public void AddPrecondition(string _key, object _value)
     {
-        myPreconditions.Add(new KeyValuePair<string, object>(_key, _value));
+        preconditions.Add(_key, _value);
     }
-
+    
     public void RemovePrecondition(string _key)
     {
-        foreach (var precondition in myPreconditions) {
+        foreach (var precondition in preconditions) {
             if (precondition.Key.Equals(_key))
             {
-                myPreconditions.Remove(precondition);   
+                preconditions.Remove(_key);
             }
         }
     }
     
     public void AddEffect(string _key, object _value)
     {
-        myEffects.Add(new KeyValuePair<string, object>(_key, _value));
+        effects.Add(_key, _value);
     }
     
     public void RemoveEffect(string _key)
     {
-        foreach (var effect in myEffects) {
+        foreach (var effect in effects) {
             if (effect.Key.Equals(_key))
             {
-                myEffects.Remove(effect);   
+                effects.Remove(_key);
             }
         }
     }
-    
-    public HashSet<KeyValuePair<string, object>> preconditions => myPreconditions;
 
-    public HashSet<KeyValuePair<string, object>> effects => myEffects;
+    public bool IsAchievableGiven(Dictionary<string, object> _conditions)
+    {
+        foreach (var precondition in effects)
+        {
+            if (!_conditions.ContainsKey(precondition.Key))
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public abstract bool DoProceduralPrecondition(NavMeshAgent _agent);
+    public abstract bool PerformAction(NavMeshAgent _agent);
+    public abstract bool IsCompleted();
+    public abstract bool RequiresInRange();
+    public abstract bool IsInRange();
 }

@@ -4,20 +4,16 @@ using UnityEngine.AI;
 public class PickupAction : Action
 {
     private bool pickedUp = false;
+    private bool inRange = false;
     private WeaponComponent targetWeapon;
-
-    public PickupAction()
+    
+    private PickupAction()
     {
         AddPrecondition("hasItem", false);
         AddEffect("hasItem", true);
     }
 
-    public override void Reset()
-    {
-        throw new System.NotImplementedException();
-    }
-
-    public override bool CheckProceduralPrecondition(GameObject _agent)
+    public override bool DoProceduralPrecondition(NavMeshAgent _agent)
     {
         var weapons = Object.FindObjectsOfType<WeaponComponent>();
         WeaponComponent closest = null;
@@ -37,9 +33,24 @@ public class PickupAction : Action
         return closest != null;
     }
 
-    public override bool PerformAction(GameObject _agent)
+    public override bool PerformAction(NavMeshAgent _agent)
     {
-        _agent.transform.GetComponent<NavMeshAgent>().SetDestination(targetWeapon.transform.position);
+        _agent.SetDestination(targetWeapon.transform.position);
         return false;
+    }
+
+    public override bool IsCompleted()
+    {
+        return pickedUp;
+    }
+
+    public override bool RequiresInRange()
+    {
+        return true;
+    }
+
+    public override bool IsInRange()
+    {
+        return inRange;
     }
 }

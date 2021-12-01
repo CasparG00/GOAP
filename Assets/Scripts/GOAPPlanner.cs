@@ -1,20 +1,17 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
-public class GOAPPlanner : MonoBehaviour
+public class GOAPPlanner
 {
-    public Queue<Action> plan(GameObject _agent, HashSet<Action> _availableActions,
-        HashSet<KeyValuePair<string, object>> _worldState, HashSet<KeyValuePair<string, object>> _goal)
+    public Queue<Action> Plan(HashSet<Action> _availableActions, Dictionary<string, object> _goal,
+        Dictionary<string, object> _worldStates)
     {
+        var usableActions = new List<Action>();
+
         foreach (var action in _availableActions)
         {
-            action.Reset();
-        }
-
-        var usableActions = new HashSet<Action>();
-        foreach (var action in usableActions)
-        {
-            if (action.CheckProceduralPrecondition(_agent))
+            if (action.IsAchievable())
             {
                 usableActions.Add(action);
             }
@@ -22,49 +19,120 @@ public class GOAPPlanner : MonoBehaviour
 
         var leaves = new List<Node>();
 
-        var start = new Node(null, 0, _worldState, null);
-        var success = BuildGraph(start, leaves, usableActions, _goal);
+        // build graph
+        var start = new Node(null, 0, _worldStates, null);
+        bool success = BuildGraph(start, leaves, usableActions, _goal);
 
-        return null;
+        if (!success)
+        {
+            Debug.Log("NO PLAN");
+            return null;
+        }
+
+        Node cheapest = null;
+        foreach (var leaf in leaves)
+        {
+            if (cheapest == null)
+            {
+                cheapest = leaf;
+            }
+            else
+            {
+                if (leaf.cost < cheapest.cost)
+                {
+                    cheapest = leaf;
+                }
+            }
+        }
+
+        var result = new List<Action>();
+
+        var n = cheapest;
+
+        while (n != null)
+        {
+            if (n.action != null)
+            {
+                result.Insert(0, n.action);
+            }
+
+            n = n.parent;
+        }
+
+        var queue = new Queue<Action>();
+        foreach (var action in result)
+        {
+            queue.Enqueue(action);
+        }
+
+        return queue;
     }
 
-    private bool BuildGraph (Node _parent, List<Node> _leaves, HashSet<Action> _usableActions, HashSet<KeyValuePair<string, object>> _goal)
+    private bool BuildGraph(Node _parent, List<Node> _leaves, List<Action> _usableActions,
+        Dictionary<string, object> _goal)
     {
-        var found = false;
+        var pathFound = false;
 
         foreach (var action in _usableActions)
         {
-            
+            if (action.IsAchievableGiven(_parent.state))
+            {
+                var currentState = new Dictionary<string, object>(_parent.state);
+
+                foreach (var effects in action.effects)
+                {
+                    if (!currentState.ContainsKey(effects.Key))
+                    {
+                        currentState.Add(effects.Key, effects.Value);
+                    }
+                }
+
+                var node = new Node(_parent, _parent.cost + action.cost, currentState, action);
+
+                if (_goal.All(_g => currentState.ContainsKey(_g.Key)))
+                {
+                    _leaves.Add(node);
+                    pathFound = true;
+                }
+                else
+                {
+                    var subset = ActionSubset(_usableActions, action);
+                    var found = BuildGraph(node, _leaves, subset, _goal);
+                    if (found)
+                    {
+                        pathFound = true;
+                    }
+                }
+            }
         }
 
-        return false;
+        return pathFound;
     }
-    
-    private bool inState(HashSet<KeyValuePair<string,object>> test, HashSet<KeyValuePair<string,object>> state) {
-        var allMatch = true;
-        foreach (var t in test) {
-            var match = false;
-            foreach (var s in state)
+
+    private List<Action> ActionSubset(List<Action> _actions, Action _removing)
+    {
+        var subset = new List<Action>();
+
+        foreach (var action in _actions)
+        {
+            if (!action.Equals(_removing))
             {
-                if (!s.Equals(t)) continue;
-                match = true;
-                break;
+                subset.Add(action);
             }
-            if (!match)
-                allMatch = false;
         }
-        return allMatch;
+
+        return subset;
     }
 
     private class Node {
         public Node parent;
-        public float runningCost;
-        public HashSet<KeyValuePair<string,object>> state;
+        public float cost;
+        public Dictionary<string,object> state;
         public Action action;
 
-        public Node(Node _parent, float _runningCost, HashSet<KeyValuePair<string,object>> _state, Action _action) {
+        public Node(Node _parent, float _cost, Dictionary<string,object> _state, Action _action) {
             this.parent = _parent;
-            this.runningCost = _runningCost;
+            this.cost = _cost;
             this.state = _state;
             this.action = _action;
         }
