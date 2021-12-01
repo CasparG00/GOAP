@@ -42,7 +42,7 @@ public class GOAPAgent : MonoBehaviour
 
                 var goal = new Dictionary<string, object>();
 
-                var plan = planner.Plan(availableActions, goal, worldData);
+                var plan = planner.Plan(agent, availableActions, goal, worldData);
                 if (plan != null)
                 {
                     currentActions = plan;

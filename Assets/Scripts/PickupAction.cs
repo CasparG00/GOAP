@@ -5,7 +5,7 @@ public class PickupAction : Action
 {
     private bool pickedUp = false;
     private bool inRange = false;
-    private WeaponComponent targetWeapon;
+    private ItemComponent targetWeapon;
     
     private PickupAction()
     {
@@ -13,22 +13,22 @@ public class PickupAction : Action
         AddEffect("hasItem", true);
     }
 
-    public override bool DoProceduralPrecondition(NavMeshAgent _agent)
+    public override bool IsAchievable(NavMeshAgent _agent)
     {
-        var weapons = Object.FindObjectsOfType<WeaponComponent>();
-        WeaponComponent closest = null;
+        var items = FindObjectsOfType<ItemComponent>();
+        ItemComponent closest = null;
         var minDist = Mathf.Infinity;
 
-        foreach (var weapon in weapons)
+        foreach (var item in items)
         {
-            var dist = Vector3.Distance(weapon.transform.position, _agent.transform.position);
+            var dist = Vector3.Distance(item.transform.position, _agent.transform.position);
             if (dist < minDist)
             {
-                closest = weapon;
+                closest = item;
                 minDist = dist;
             }
         }
-
+        
         targetWeapon = closest;
         return closest != null;
     }

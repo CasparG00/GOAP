@@ -1,17 +1,18 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.AI;
 
 public class GOAPPlanner
 {
-    public Queue<Action> Plan(HashSet<Action> _availableActions, Dictionary<string, object> _goal,
+    public Queue<Action> Plan(NavMeshAgent _agent, IEnumerable<Action> _availableActions, Dictionary<string, object> _goal,
         Dictionary<string, object> _worldStates)
     {
         var usableActions = new List<Action>();
 
         foreach (var action in _availableActions)
         {
-            if (action.IsAchievable())
+            if (action.IsAchievable(_agent))
             {
                 usableActions.Add(action);
             }

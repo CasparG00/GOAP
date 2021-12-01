@@ -2,20 +2,13 @@
 using UnityEngine;
 using UnityEngine.AI;
 
-public abstract class Action
+public abstract class Action : MonoBehaviour
 {
-    public string name = "Abstract Action";
     public float cost = 1f;
     public GameObject target;
-    public float duration = 0f;
 
     public Dictionary<string, object> preconditions { get; }
     public Dictionary<string, object> effects { get; }
-
-    public bool IsAchievable()
-    {
-        return true;
-    }
 
     public void AddPrecondition(string _key, object _value)
     {
@@ -46,10 +39,12 @@ public abstract class Action
             }
         }
     }
+    
+    public abstract bool IsAchievable(NavMeshAgent _agent);
 
     public bool IsAchievableGiven(Dictionary<string, object> _conditions)
     {
-        foreach (var precondition in effects)
+        foreach (var precondition in preconditions)
         {
             if (!_conditions.ContainsKey(precondition.Key))
             {
@@ -58,8 +53,7 @@ public abstract class Action
         }
         return true;
     }
-
-    public abstract bool DoProceduralPrecondition(NavMeshAgent _agent);
+    
     public abstract bool PerformAction(NavMeshAgent _agent);
     public abstract bool IsCompleted();
     public abstract bool RequiresInRange();
