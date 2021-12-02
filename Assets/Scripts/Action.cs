@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -10,7 +11,13 @@ public abstract class Action : MonoBehaviour
     public Dictionary<string, object> preconditions { get; }
     public Dictionary<string, object> effects { get; }
 
-    public void AddPrecondition(string _key, object _value)
+    public Action()
+    {
+        preconditions = new Dictionary<string, object>();
+        effects = new Dictionary<string, object>();
+    }
+    
+    protected void AddPrecondition(string _key, object _value)
     {
         preconditions.Add(_key, _value);
     }
@@ -58,4 +65,5 @@ public abstract class Action : MonoBehaviour
     public abstract bool IsCompleted();
     public abstract bool RequiresInRange();
     public abstract bool IsInRange();
+    public abstract void Reset();
 }

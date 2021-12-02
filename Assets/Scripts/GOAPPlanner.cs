@@ -5,13 +5,14 @@ using UnityEngine.AI;
 
 public class GOAPPlanner
 {
-    public Queue<Action> Plan(NavMeshAgent _agent, IEnumerable<Action> _availableActions, Dictionary<string, object> _goal,
-        Dictionary<string, object> _worldStates)
+    public Queue<Action> Plan(NavMeshAgent _agent, IEnumerable<Action> _availableActions, Dictionary<string, object> _goal, Dictionary<string, object> _worldStates)
     {
         var usableActions = new List<Action>();
 
         foreach (var action in _availableActions)
         {
+            action.Reset();
+            
             if (action.IsAchievable(_agent))
             {
                 usableActions.Add(action);
@@ -22,7 +23,7 @@ public class GOAPPlanner
 
         // build graph
         var start = new Node(null, 0, _worldStates, null);
-        bool success = BuildGraph(start, leaves, usableActions, _goal);
+        var success = BuildGraph(start, leaves, usableActions, _goal);
 
         if (!success)
         {
@@ -48,16 +49,16 @@ public class GOAPPlanner
 
         var result = new List<Action>();
 
-        var n = cheapest;
+        var node = cheapest;
 
-        while (n != null)
+        while (node != null)
         {
-            if (n.action != null)
+            if (node.action != null)
             {
-                result.Insert(0, n.action);
+                result.Insert(0, node.action);
             }
 
-            n = n.parent;
+            node = node.parent;
         }
 
         var queue = new Queue<Action>();
@@ -78,20 +79,24 @@ public class GOAPPlanner
         {
             if (action.IsAchievableGiven(_parent.state))
             {
+                Debug.Log(action + "is achievable");
                 var currentState = new Dictionary<string, object>(_parent.state);
 
                 foreach (var effects in action.effects)
                 {
+                    Debug.Log(effects.Key);
                     if (!currentState.ContainsKey(effects.Key))
                     {
                         currentState.Add(effects.Key, effects.Value);
+                        Debug.Log("<color=green>Added State: </color>" + effects.Key);
                     }
                 }
 
                 var node = new Node(_parent, _parent.cost + action.cost, currentState, action);
 
-                if (_goal.All(_g => currentState.ContainsKey(_g.Key)))
+                if (GoalAchieved(_goal, currentState))
                 {
+                    Debug.Log("Goal Achieved");
                     _leaves.Add(node);
                     pathFound = true;
                 }
@@ -108,6 +113,19 @@ public class GOAPPlanner
         }
 
         return pathFound;
+    }
+
+    private bool GoalAchieved(Dictionary<string, object> _goal, Dictionary<string, object> _state)
+    {
+        foreach (var g in _goal)
+        {
+            if (!_state.ContainsKey(g.Key))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private List<Action> ActionSubset(List<Action> _actions, Action _removing)

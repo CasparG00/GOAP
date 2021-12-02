@@ -1,8 +1,9 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.AI;
 
-public class GOAPAgent : MonoBehaviour
+public sealed class GOAPAgent : MonoBehaviour
 {
     public GOAPPlanner planner;
     
@@ -28,19 +29,17 @@ public class GOAPAgent : MonoBehaviour
     
     private void Update()
     {
-        var action = currentActions.Peek();
-        
+        Action action = null;
+        if (currentActions.Count > 0)
+        {
+            action = currentActions.Peek();
+        }
+
         switch (state)
         {
             case AgentState.Idle:
-                var worldData = new Dictionary<string, object>();
-
-                // worldData.Add(new KeyValuePair<string, object>("hasOre", backpack.numOre > 0));
-                // worldData.Add(new KeyValuePair<string, object>("hasLogs", backpack.numLogs > 0));
-                // worldData.Add(new KeyValuePair<string, object>("hasFirewood", backpack.numFirewood > 0));
-                // worldData.Add(new KeyValuePair<string, object>("hasTool", backpack.tool != null));
-
-                var goal = new Dictionary<string, object>();
+                var worldData = GetComponent<IGoap>().GetWorldData();
+                var goal = GetComponent<IGoap>().CreateGoals();
 
                 var plan = planner.Plan(agent, availableActions, goal, worldData);
                 if (plan != null)
@@ -57,6 +56,10 @@ public class GOAPAgent : MonoBehaviour
                 if (action.IsInRange())
                 {
                     state = AgentState.PerformAction;
+                }
+                else
+                {
+                    agent.SetDestination(action.target.transform.position);
                 }
                 break;
             case AgentState.PerformAction:
