@@ -7,6 +7,7 @@ public abstract class Action : MonoBehaviour
 {
     public float cost = 1f;
     public GameObject target;
+    protected bool inRange;
 
     public Dictionary<string, object> preconditions { get; }
     public Dictionary<string, object> effects { get; }
@@ -60,10 +61,22 @@ public abstract class Action : MonoBehaviour
         }
         return true;
     }
+
+    public void DoReset()
+    {
+        inRange = false;
+        target = null;
+        Reset();
+    }
     
     public abstract bool PerformAction(NavMeshAgent _agent);
     public abstract bool IsCompleted();
     public abstract bool RequiresInRange();
     public abstract bool IsInRange();
     public abstract void Reset();
+
+    public void SetInRange(bool _inRange)
+    {
+        this.inRange = _inRange;
+    }
 }

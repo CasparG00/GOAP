@@ -45,6 +45,7 @@ public class DropOffSticks : Action
     {
         var inventory = _agent.GetComponent<Inventory>();
         inventory.Remove("Stick", inventory.GetAmount("Stick"));
+        droppedOffSticks = true;
 
         return true;
     }
@@ -61,7 +62,7 @@ public class DropOffSticks : Action
 
     public override bool IsInRange()
     {
-        return true;
+        return inRange;
     }
 
     public override void Reset()

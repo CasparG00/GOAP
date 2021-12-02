@@ -8,19 +8,27 @@ public class Inventory : MonoBehaviour
     public void Add(string _id, int _amount)
     {
         _id = _id.ToLower();
-        items[_id] += _amount;
+        if (items.ContainsKey(_id))
+        {
+            items[_id] += _amount;
+        }
+        else
+        {
+            items.Add(_id, _amount);
+        }
     }
 
     public void Remove(string _id, int _amount)
     {
         _id = _id.ToLower();
-        if (items[_id] > _amount)
+        
+        if (items[_id] > _amount) 
         {
             items[_id] -= _amount;
         }
         else
         {
-            items.Remove(_id);
+            items[_id] = 0;
         }
     }
 

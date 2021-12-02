@@ -10,7 +10,7 @@ public sealed class GOAPAgent : MonoBehaviour
     private HashSet<Action> availableActions;
     private Queue<Action> currentActions;
 
-    public AgentState state = AgentState.Idle;
+    public AgentState state = AgentState.idle;
 
     public NavMeshAgent agent;
     
@@ -37,7 +37,7 @@ public sealed class GOAPAgent : MonoBehaviour
 
         switch (state)
         {
-            case AgentState.Idle:
+            case AgentState.idle:
                 var worldData = GetComponent<IGoap>().GetWorldData();
                 var goal = GetComponent<IGoap>().CreateGoals();
 
@@ -45,60 +45,83 @@ public sealed class GOAPAgent : MonoBehaviour
                 if (plan != null)
                 {
                     currentActions = plan;
-                    state = AgentState.PerformAction;
+                    
+                    if (currentActions.Peek().RequiresInRange())
+                    {
+                        state = AgentState.moveTo;
+                    }
+                    else
+                    {
+                        state = AgentState.performAction;
+                    }
                 }
                 else
                 {
                     Debug.Log("<color=orange>Failed to make plan</color>");
                 }
                 break;
-            case AgentState.MoveTo:
-                if (action.IsInRange())
+            case AgentState.moveTo:
+                if (action.RequiresInRange() && action.target ==  null)
                 {
-                    state = AgentState.PerformAction;
+                    state = AgentState.idle;
+                    return;
                 }
-                else
+
+                if (GetComponent<IGoap>().MoveAgent(action))
                 {
-                    agent.SetDestination(action.target.transform.position);
+                    state = AgentState.performAction;
                 }
+                
                 break;
-            case AgentState.PerformAction:
+            case AgentState.performAction:
+                if (!(currentActions.Count > 0))
+                {
+                    Debug.Log("Completed All Actions");
+                    state = AgentState.idle;
+                    return;
+                }
+                
+                action = currentActions.Peek();
                 if (action.IsCompleted()) 
                 {
                     currentActions.Dequeue();
                 }
-                
-                if (currentActions.Count == 0)
+
+                if (currentActions.Count > 0)
                 {
+                    action = currentActions.Peek();
                     var inRange = !action.RequiresInRange() || action.IsInRange();
+
                     if (inRange)
                     {
                         var success = action.PerformAction(agent);
+
                         if (!success)
                         {
-                            state = AgentState.Idle;
+                            state = AgentState.idle;
                         }
                     }
                     else
                     {
-                        state = AgentState.MoveTo;
+                        state = AgentState.moveTo;
                     }
                 }
                 else
                 {
-                    state = AgentState.Idle;
+                    state = AgentState.idle;
                 }
+                
                 break;
             default:
-                state = AgentState.Idle;
+                state = AgentState.idle;
                 break;
         }
     }
 
     public enum AgentState
     {
-        Idle,
-        MoveTo,
-        PerformAction,
+        idle,
+        moveTo,
+        performAction,
     }
 }

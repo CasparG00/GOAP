@@ -4,7 +4,6 @@ using UnityEngine.AI;
 public class PickupStickAction : Action
 {
     private bool pickedUp;
-    private bool inRange;
     private StickComponent targetStick;
 
     private float startTime;
@@ -37,7 +36,7 @@ public class PickupStickAction : Action
             Debug.Log("Stick Component not found in scene");
             return false;
         }
-        
+
         targetStick = closest;
         target = targetStick.gameObject;
         
@@ -46,6 +45,7 @@ public class PickupStickAction : Action
 
     public override bool PerformAction(NavMeshAgent _agent)
     {
+        Debug.Log("Performing Pickup Action");
         if (startTime == 0)
         {
             startTime = Time.time;
@@ -57,7 +57,7 @@ public class PickupStickAction : Action
             inventory.Add("Stick", 1);
             pickedUp = true;
         }
-        return false;
+        return true;
     }
 
     public override bool IsCompleted()

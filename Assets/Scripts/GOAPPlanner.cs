@@ -11,7 +11,7 @@ public class GOAPPlanner
 
         foreach (var action in _availableActions)
         {
-            action.Reset();
+            action.DoReset();
             
             if (action.IsAchievable(_agent))
             {
@@ -77,26 +77,14 @@ public class GOAPPlanner
 
         foreach (var action in _usableActions)
         {
-            if (action.IsAchievableGiven(_parent.state))
+            if (InState(action.preconditions, _parent.state))
             {
-                Debug.Log(action + "is achievable");
-                var currentState = new Dictionary<string, object>(_parent.state);
-
-                foreach (var effects in action.effects)
-                {
-                    Debug.Log(effects.Key);
-                    if (!currentState.ContainsKey(effects.Key))
-                    {
-                        currentState.Add(effects.Key, effects.Value);
-                        Debug.Log("<color=green>Added State: </color>" + effects.Key);
-                    }
-                }
+                var currentState = PopulateState(_parent.state, action.effects);
 
                 var node = new Node(_parent, _parent.cost + action.cost, currentState, action);
 
-                if (GoalAchieved(_goal, currentState))
+                if (InState(_goal, currentState))
                 {
-                    Debug.Log("Goal Achieved");
                     _leaves.Add(node);
                     pathFound = true;
                 }
@@ -111,8 +99,19 @@ public class GOAPPlanner
                 }
             }
         }
-
+        
         return pathFound;
+    }
+    
+    private bool InState(Dictionary<string, object> _test, Dictionary<string, object> _state) {
+        var allMatch = true;
+        foreach (var t in _test) 
+        {
+            var match = _state.Contains(t);
+            if (!match)
+                allMatch = false;
+        }
+        return allMatch;
     }
 
     private bool GoalAchieved(Dictionary<string, object> _goal, Dictionary<string, object> _state)
@@ -142,6 +141,17 @@ public class GOAPPlanner
 
         return subset;
     }
+    
+    private Dictionary<string, object> PopulateState(Dictionary<string, object> _currentState, Dictionary<string, object> _stateChange) 
+    {
+        var state = _currentState.ToDictionary(_s => _s.Key, _s => _s.Value);
+
+        foreach (var change in _stateChange) {
+            state[change.Key] = change.Value;
+        }
+        return state;
+    }
+
 
     private class Node {
         public Node parent;
